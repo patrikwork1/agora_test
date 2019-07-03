@@ -3,69 +3,146 @@
 <head>
 <title>Agora Web Sample</title>
 <link rel="stylesheet" href="vendor/bootstrap.min.css">
+<link 
+    rel="stylesheet"
+    href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"
+    integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
 <script src="AgoraRTCSDK-2.6.1.js"></script>
 <script src="vendor/jquery.js"></script>
 </head>
 
 <body>
-<div id="div_device" class="panel panel-default">
-<div class="select">
-<label for="audioSource">Audio source: </label><select id="audioSource"></select>
-</div>
-<div class="select">
-<label for="videoSource">Video source: </label><select id="videoSource"></select>
-</div>
-</div>
+  <div style="background:url(https://www.theastonishingvisit.com/wp-content/uploads/2019/05/bryan-min.png);               height: 80px;
+              padding-top: 10px;
+              margin-left: -12px;">
+    <a href="https://www.theastonishingvisit.com/" 
+      title="The Astonishing Visit" 
+      style="color:white; margin-left: 40px;">
+      The Astonishing Visit's
+    </a>
+    <p style="color:white; margin-left: 30px;">
+      Video Calling Application
+    </p>
+  </div>
+  <div id="div_device" class="panel panel-default" style="display: none;">
+    <div class="select">
+      <label for="audioSource">Audio source: </label><select id="audioSource"></select>
+    </div>
+    <div class="select">
+      <label for="videoSource">Video source: </label><select id="videoSource"></select>
+    </div>
+  </div>
 
-<div id="div_join" class="panel panel-default">
-<div class="panel-body">
-App ID: <input id="appId" type="text" value="" size="36"></input>
-Channel: <input id="channel" type="text" value="1000" size="4"></input>
-Host: <input id="video" type="checkbox" checked></input>
-<button id="join" class="btn btn-primary" onclick="join()">Join</button>
-<button id="leave" class="btn btn-primary" onclick="leave()">Leave</button>
-<button id="publish" class="btn btn-primary" onclick="publish()">Publish</button>
-<button id="unpublish" class="btn btn-primary" onclick="unpublish()">Unpublish</button>
-</div>
-</div>
+  <div id="div_join" class="panel panel-default" style="justify-content: center">
+    <div class="panel-body row-div">
+        <button id="enableAudio" class="btn-circle-green" onclick="enableAudio()"><i class="fa fa-microphone"></i></button>
+        <button id="disableAudio" class="btn-circle-red" onclick="disableAudio()"><i class="fa fa-microphone-slash"></i></button>
+        <button id="enableVideo" class="btn-circle-green" onclick="enableVideo()"><i class="fas fa-video"></i></button>
+        <button id="disableVideo" class="btn-circle-red" onclick="disableVideo()"><i class="fas fa-video-slash"></i></button>
+        <button id="join" class="btn-circle-green" onclick="join()"><i class="fas fa-phone"></i></button>
+        <button id="leave" class="btn-circle-red" onclick="leave()"><i class="fas fa-phone-slash"></i></button>
+      <!-- <button id="publish" class="btn btn-primary" onclick="publish()">Publish</button>
+      <button id="unpublish" class="btn btn-primary" onclick="unpublish()">Unpublish</button> -->
+      <div style="display:none">
+          App ID: <input id="appId" type="text" value="" size="36"></input>
+          Channel: <input id="channel" type="text" value="1000" size="4"></input>
+          Host: <input id="video" type="checkbox" checked></input>
+      </div>
+    </div>
+  </div>
 
-    <!--style>
+  <!-- <style>
     .video__box{width:910px; margin:0 auto; overflow:hidden;}
     .video__main{ width:810px; height:607px;float:left }
     .video__list{ width:200px; height:607px; float:left;}
-    .video__item{ width:200px; height:174px; hei background:url(/img/icon_live.png) center center no-repeat; }
-    </style>
-    <div class="video__main">
+    .video__item{ width:200px; height:174px; }
+  </style>
+  <div class="video__main">
+  </div>
+  <div class="video__list">
+    <div class="video__item"></div>
+    <div id="video" class="video__item">
+        <div id="agora_local"></div>
     </div>
-    <div class="video__list">
-        <div class="video__item"></div>
-        <div id="video" class="video__item">
-            <div id="agora_local"></div>
-        </div>
-    </div-->
+  </div> -->
+  <div class="" style="margin: 0 auto; justify-content: center">
+      <div id="video" style="margin:0 auto;">
+      </div>
+      <div id="agora_local" class="self-video"></div>
+  </div>
 
-<div id="video" style="margin:0 auto;">
-    <div id="agora_local" style="float:right;width:210px;height:147px;display:inline-block;"></div>
-</div>
+
+<style>
+    .self-video{
+      margin-top: 20px;
+      position: fixed;
+      width:180px;
+      height:120px;
+      margin-right: 15px;
+      margin-left: 15px;
+    }
+
+    #video{
+      position: absolute;
+      float:left;
+      border: solid 1px rgb(81, 69, 150);;
+    }
+
+    i{
+      color: white;
+      font-size: 24px;
+    }
+
+    .row-div{
+      text-align: center !important;
+    }
+
+    .btn-circle-green:hover{
+      margin-right: 5px;
+      display:block;
+      height: 50px;
+      width: 50px;
+      border-radius: 50%;
+      background-color: rgb(107, 87, 223);
+    }
+    
+    .btn-circle-green {
+      margin-right: 5px;
+      display:block;
+      height: 50px;
+      width: 50px;
+      border-radius: 50%;
+      background-color: rgb(81, 69, 150);
+      float: left;
+    }
+
+    .btn-circle-red:hover{
+      margin-right: 20px;
+      display:block;
+      height: 50px;
+      width: 50px;
+      border-radius: 50%;
+      background-color: rgb(156, 40, 50);
+    }
+    
+    .btn-circle-red {
+      margin-right: 20px;
+      display:block;
+      height: 50px;
+      width: 50px;
+      border-radius: 50%;
+      background-color: rgb(216, 31, 47);
+      float: left;
+    }
+    @import url("https://fonts.googleapis.com/css?family=Barlow:400,500,600|Noto+Serif+KR:400,500,600");
+    html{font-family:sans-serif;line-height:1.15;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}article,aside,footer,header,nav,section{display:block}h1{font-size:2em;margin:.67em 0}figcaption,figure,main{display:block}figure{margin:1em 40px}hr{box-sizing:content-box;height:0;overflow:visible}pre{font-family:monospace,monospace;font-size:1em}a{background-color:transparent;-webkit-text-decoration-skip:objects}a:active,a:hover{outline-width:0}abbr[title]{border-bottom:none;text-decoration:underline;text-decoration:underline dotted}b,strong{font-weight:inherit}b,strong{font-weight:bolder}code,kbd,samp{font-family:monospace,monospace;font-size:1em}dfn{font-style:italic}mark{background-color:#ff0;color:#000}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}audio,video{display:inline-block}audio:not([controls]){display:none;height:0}img{border-style:none}svg:not(:root){overflow:hidden}button,input,optgroup,select,textarea{font-family:sans-serif;font-size:100%;line-height:1.15;margin:0}button,input{overflow:visible}button,html{font-size:20px}body{color:#444;font-family:"Barlow","Arial",sans-serif;font-weight:400;line-height:1.67;font-size:20px;letter-spacing:.5px}@media (min-width:1025px){body{line-height:1.5;letter-spacing:1px}}h1{font-size:1.7rem;margin-bottom:2rem;line-height:3rem}h2{font-size:1.1rem}h3{font-size:1.2rem}h4{font-size:1.1rem}h5{font-size:1rem}h2,h3,h4,h5{margin-top:0;line-height:1.9rem}@media (min-width:1025px){h2,h3,h4,h5{line-height:2.5rem}}h2,h3,h4,h5{margin-bottom:1.2rem}h1,h2,h3{font-weight:500;font-family:"Noto Serif KR","Arial",sans-serif}h4{font-family:"Barlow","Arial",sans-serif;font-weight:400}p{margin-bottom:1rem;font-size:1rem}@media (max-width:1025px){p{font-size:.75rem}}time{font-size:.7rem}input[type=text],input[type=email],input[type=password]{border:solid 1px #d0d0d0;background:#fff;font-size:1rem;padding:.7rem .5rem;color:#3e3e3e;letter-spacing:1px;outline:none}textarea{border:solid 1px #d0d0d0;background:#fff;font-size:1rem;padding:.7rem .5rem;color:#3e3e3e;letter-spacing:1px;min-height:70px}input[type=submit]{width:190px;height:50px;border-radius:6px;border:none;outline:none;font-size:.9rem;letter-spacing:1px}label{display:inline-block;margin-bottom:.5rem;font-size:.9rem;color:#645ba7}@media (min-width:1025px){h1{font-size:2.4rem}h2{font-size:1.5rem}h3{font-size:1.5rem}h4{font-size:1.4rem}h5{font-size:1.3rem}h2,h3,h4,h5{margin-bottom:.8rem}p{margin-bottom:1.4rem}time{font-size:.9rem}}.clearfix:after{clear:both;content:'';display:table}.container{max-width:1290px;margin-left:auto;margin-right:auto;padding-left:20px;padding-right:20px;width:100%}.hide-text{overflow:hidden;padding:0;text-indent:101%;white-space:nowrap}.visually-hidden{border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px}.font-headers-style{font-family:"Noto Serif KR","Arial",sans-serif}.b-secondary-color-style{color:#645ba7}.w150h150{width:150px !important;height:150px !important}@media (max-width:575px){.reverse-on-mobile{flex-direction:column-reverse}}.b-header-line-style{padding-bottom:1.9rem;position:relative;margin-bottom:3rem}@media (min-width:1025px){.b-header-line-style{margin-bottom:5rem;line-height:3rem;padding-bottom:3rem}}.b-header-line-style:after{width:100px;background:#645ba7;height:1px;position:absolute;left:0;right:0;margin:0 auto;content:"";bottom:0}@media (min-width:1025px){h2.b-header-line-style{line-height:2.5rem}}.b-header-bg-line-style{font-family:"Barlow","Arial",sans-serif;font-size:1.1rem;line-height:1.82;position:relative;margin-bottom:2rem}@media (min-width:1025px){.b-header-bg-line-style{font-size:1.4rem}}
+  </style>
 
 <script language="javascript">
 
 if(!AgoraRTC.checkSystemRequirements()) {
   alert("Your browser does not support WebRTC!");
 }
-
-/* select Log type */
-// AgoraRTC.Logger.setLogLevel(AgoraRTC.Logger.NONE);
-// AgoraRTC.Logger.setLogLevel(AgoraRTC.Logger.ERROR);
-// AgoraRTC.Logger.setLogLevel(AgoraRTC.Logger.WARNING);
-// AgoraRTC.Logger.setLogLevel(AgoraRTC.Logger.INFO);  
-// AgoraRTC.Logger.setLogLevel(AgoraRTC.Logger.DEBUG);
-
-/* simulated data to proof setLogLevel() */
-// AgoraRTC.Logger.error('this is error');
-// AgoraRTC.Logger.warning('this is warning');
-// AgoraRTC.Logger.info('this is info');
-// AgoraRTC.Logger.debug('this is debug');
 
 var client, localStream, camera, microphone;
 
@@ -75,11 +152,10 @@ var videoSelect = document.querySelector('select#videoSource');
 function join() {
   document.getElementById("join").disabled = true;
   document.getElementById("video").disabled = true;
-  var channel_key = null;
-
-  console.log("Init AgoraRTC client with App ID: " + appId.value);
+  var channel_key = undefined;
+  // console.log("Init AgoraRTC client with App ID: " + appId.value);
   client = AgoraRTC.createClient({mode: 'live'});
-  client.init(appId.value, function () {
+  client.init("2ac8a5cf36d840c6a70e14de92b3006f", function () {
     console.log("AgoraRTC client initialized");
     client.join(channel_key, channel.value, null, function(uid) {
       console.log("User " + uid + " join channel successfully");
@@ -138,7 +214,6 @@ function join() {
     }
   });
 
-
   client.on('stream-added', function (evt) {
     var stream = evt.stream;
     console.log("New stream added: " + stream.getId());
@@ -152,7 +227,7 @@ function join() {
     var stream = evt.stream;
     console.log("Subscribe remote stream successfully: " + stream.getId());
     if ($('div#video #agora_remote'+stream.getId()).length === 0) {
-      $('div#video').append('<div id="agora_remote'+stream.getId()+'" style="float:left; width:810px;height:607px;display:inline-block;"></div>');
+      $('div#video').append('<div id="agora_remote'+stream.getId()+'" style="width:810px;height:607px;display:inline-block;"></div>');
     }
     stream.play('agora_remote' + stream.getId());
   });
@@ -197,6 +272,31 @@ function unpublish() {
   client.unpublish(localStream, function (err) {
     console.log("Unpublish local stream failed" + err);
   });
+}
+
+function enableAudio() {
+  //document.getElementById("disableAudio").disabled = true;
+  //document.getElementById("enableAudio").disabled = false;
+  console.log("enableAudio");
+  localStream.enableAudio();
+}
+
+function disableAudio() {
+  //document.getElementById("disableAudio").disabled = false;
+  //document.getElementById("enableAudio").disabled = true;
+  localStream.disableAudio();
+}
+
+function enableVideo() {
+  //document.getElementById("disableVideo").disabled = true;
+  //document.getElementById("enableVideo").disabled = false;
+  localStream.enableVideo();
+}
+
+function disableVideo() {
+  //document.getElementById("disableVideo").disabled = false;
+  //document.getElementById("enableVideo").disabled = true;
+  localStream.disableVideo();
 }
 
 function getDevices() {
