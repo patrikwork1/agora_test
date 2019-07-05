@@ -54,9 +54,20 @@
         </div>
         <!-- Local video feed -->
         <div id="agora_local" class="self-video"></div>
+        <!-- Preview Video -->
+        <div id="preview"></div>
     </div>
 
     <style>
+      #preview {
+        width: 100vw;
+        height: 100vh;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 100;
+      }
+
       .self-video{
         margin-top: 20px;
         position: fixed;
@@ -122,6 +133,7 @@
       button,input{overflow:visible}button,html{font-size:20px}body{color:#444;font-family:"Barlow","Arial",sans-serif;font-weight:600;line-height:1.67;font-size:20px;letter-spacing:.5px}
     </style>
     <script language="javascript">
+      //#region Agora
       if(!AgoraRTC.checkSystemRequirements()) {
         alert("Your browser does not support WebRTC!");
       }
@@ -289,20 +301,157 @@
         });
       }
 
-      function launch() {
-        fetch(`${apiEndpoint}/facilities/${facility}/schedule/${id}/tokens`, {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({email:email})}).then((response) => {}).then((data) => {
-          appointment = new Appointment(data);
-        }).catch((err)=> {
-          if (err.getCode === undefined) {
-            console.log("Failed to fetch data")
+      getDevices();
+      //#endregion
+      //#region Websample js
+      class ProtocolHandler {
+        constructor() {
+          if (new.target === ProtocolHandler) {
+            throw console.log("Cannot construct ProtocolHandler directly - use subclass to override methods");
           }
-          console.log(`Exception occurred processing appointment: ${err}`);
-        });
+        }
+
+        handleLookat(x, y, z, w) {
+          console.log(`Handling lookat: x = ${x}, y = ${y}, z = ${z}, w = ${w}`);
+        }
+
+        handleError(err) {
+          console.log(`Handling server error: error = ${err}`);
+        }
+
+        handleVideo(secs, length, filename) {
+          console.log(`Handling video: seconds = ${secs}, length = ${length}, filename = ${filename}`);
+        }
+
+        handleAlive(device) {
+          console.log(`Handling alive: device = ${device}`);
+        }
+      }
+
+    class WebSocketHandler {
+      constructor(session, reconnect, handler, relayEndpoint) {
+        this.socket = null;
+        this.closed = false;
+        this.session = session;
+        this.reconnect = reconnect;
+        this.encoder = new TextEncoder("utf-8");
+        this.handler = handler;
+
+          if (!window.WebSocket) {
+              console.log("cannot find global websocket instance")
+          }
+
+          if (!window.TextEncoder) {
+              console.log("cannot find global textencoder instance")
+          }
+          this.wssuri = `${relayEndpoint}/stream`;
+        }
+
+        connect() {
+          if (this.closed === true) {
+            return;
+          }
+          this.socket = new WebSocket(this.wssuri);
+          this.socket.onopen = this._onOpen.bind(this);
+          this.socket.onmessage = this._onMessage.bind(this);
+          this.socket.onclose = this._onClose.bind(this);
+        }
+
+        _onClose(event) {
+          console.log("Websocket closed");
+
+          if (this.reconnect !== true) {
+              return;
+          }
+
+          this.socket = null;
+
+          setTimeout(() => {
+              this.connect()
+          }, 1000);
+        }
+
+        _onOpen(event) {
+          console.log("Websocket opened");
+          this.socket.binaryType = "arraybuffer";
+
+          const data = this.encoder.encode(this.session);
+          const len = data.length;
+
+          const msg = new Uint8Array(1 + 1 + len);
+          msg[0] = 0x1;
+          msg[1] = len;
+          for (let idx = 2, p = 0; p < data.length; p++, idx++) {
+            msg[idx] = data[p];
+          }
+
+          this.socket.send(msg);
+        }
+
+        _onMessage(event) {
+          if (!(event.data instanceof ArrayBuffer)) {
+              console.log("Server sent non-binary data");
+              return;
+          }
+
+          const msg = new DataView(event.data);
+          const type = msg.getUint8(0);
+
+          switch (type) {
+            case MT_ERROR:
+              this._handleError(msg);
+              break;
+            case MT_LOOKAT:
+              this._handleLookat(msg);
+              break;
+            case MT_VIDEO:
+              this._handleVideo(msg);
+              break;
+            case MT_ALIVE:
+              this._handleAlive(msg);
+              break;
+            default:
+              console.log(`Unknown message type: code = ${type}`);
+            }
+        }
+
+        _handleAlive(msg) {
+          const length = msg.getInt32(1, true);
+          let idx = 5;
+          let deviceid = "";
+          for (let i = 0; i < length; i++) {
+            deviceid += String.fromCharCode(msg.getUint8(idx));
+            idx++;
+          }
+
+          this.handler.handleAlive(deviceid);
+        }
+
+        _handleVideo(msg) {
+          const roty = msg.getFloat32(1, true);
+          const secs = msg.getInt32(5, true);
+          const length = msg.getInt32(9, true);
+
+          let idx = 13;
+          let filename = "";
+          for (let i = 0; i < length; i++) {
+            filename += String.fromCharCode(msg.getUint8(idx));
+            idx++;
+          }
+          this.handler.handleVideo(roty, secs, length, filename);
+        }
+
+        _handleLookat(msg) {
+          const x = msg.getFloat32(1, true);
+          const y = msg.getFloat32(5, true);
+          const z = msg.getFloat32(9, true);
+          const w = msg.getFloat32(13, true);
+          this.handler.handleLookat(x, y, z, w);
+        }
+
+        _handleError(msg) {
+          this.handler.handleError(`Error received from server: message = ${msg}`);
+        }
       }
 
       const getUrlParameter = function (name) {
@@ -312,14 +461,93 @@
         return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
       };
 
+      class NetworkProtocolHandler extends ProtocolHandler {
+        constructor(appointment, cdnEndpoint) {
+            super();
+            this.appointment = appointment;
+            this.cdnEndpoint = cdnEndpoint;
+        }
+
+        handleError(err) {
+            super.handleError(err);
+        }
+
+        handleLookat(x,y,z,w) {
+            window.rotation = [x,y,z,w];
+        }
+
+        handleVideo(roty, seconds, length, filename) {
+
+            if (this.videoStarted === true) {
+                return;
+            }
+
+            this.videoStarted = true;
+
+            const src = `${this.cdnEndpoint}/movies/lowres_${filename}`;
+
+            this.videomanager.start(roty, src, seconds);
+            this.videomanager.animate();
+        }
+
+        handleAlive(deviceid) {
+            this.lastAlive = new Date();
+
+            if (this.callmanager.isActive()) {
+                return;
+            }
+
+            this.callmanager.call(deviceid);
+        }
+
+        handleTimeout() {
+            if (this.lastAlive === null) {
+                return;
+            }
+
+            if (new Date() - this.lastAlive > 10000) {
+                // chop the call
+                console.log("terminating call - timeout on alive event from remote client");
+                this.lastAlive = null;
+                this.callmanager.hangup();
+            }
+        }
+        }
+
+        function launch() {
+        fetch(`${apiEndpoint}/facilities/${facility}/schedule/${id}/tokens`, {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({email:email})}).then((response) => {}).then((data) => {
+            appointment = new Appointment(data);
+            videomanager = new VideoManager();
+        }).catch((err)=> {
+        if (err.getCode === undefined) {
+            console.log("Failed to fetch data")
+        }
+        console.log(`Exception occurred processing appointment: ${err}`);
+        });
+
+        handler = new NetworkProtocolHandler(sock, cdnEndpoint);
+
+        sock = new WebSocketHandler(id, true, handler, relayEndpoint);
+        sock.connect();
+        }
+
+      let sock = null;
+      let handler = null;
+
       const id = getUrlParameter("a");
       const email = getUrlParameter("e");
       const apiEndpoint = getUrlParameter("au");
       const relayEndpoint = getUrlParameter("ru");
       const facility = getUrlParameter("f");
       const cdnEndpoint = getUrlParameter("cu");
+
       launch();
-      getDevices();
+      //#endregion
     </script>
   </body>
 </html>
